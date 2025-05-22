@@ -11,5 +11,5 @@ class UserAnime(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     anime_id: Mapped[int] = mapped_column(ForeignKey('anime.id'))
 
-    user: Mapped['User'] = relationship('User', back_populates='', foreign_keys=[user_id])
-    anime: Mapped['Anime'] = relationship('Anime', back_populates='', foreign_keys=[anime_id])
+    user: Mapped['User'] = relationship('User', back_populates='anime', foreign_keys=[user_id])
+    anime: Mapped['Anime'] = relationship('Anime', back_populates='users', foreign_keys=[anime_id])
