@@ -15,6 +15,8 @@ from .database import (
                     up,
                     drop) 
 
+from .keyboards.reply import main_menu
+
 load_dotenv(find_dotenv())
 
 dp = Dispatcher()
@@ -31,10 +33,10 @@ async def give_main_menu(message: Message):
             if not user:
                 session.add(User(id = user_id))
                 session.flush()
-                await message.answer(f'Welcome! {message.from_user.first_name}.')
+                await message.answer(f'Welcome! {message.from_user.first_name}.', reply_markup=main_menu())
 
             else:
-                await message.answer(f'Hello! {message.from_user.first_name}')
+                await message.answer(f'Hello! {message.from_user.first_name}', reply_markup=main_menu())
 
     except Exception as e:
         print(e)
