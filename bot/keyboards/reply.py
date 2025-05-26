@@ -20,17 +20,9 @@ def library_menu() -> ReplyKeyboardMarkup:
     builder.button(text='✅ Completed')
     builder.button(text='📅 Planned')
     builder.button(text='🗑️ Remove')
-    builder.button(text='🔙 Back to Main')
-
-    return builder.adjust(2, 2, 1).as_markup(resize_keyboard=True)
-
-def back_only() -> ReplyKeyboardMarkup:
-    '''Back to main menu'''
-
-    builder = ReplyKeyboardBuilder()
     builder.button(text='🔙 Back')
 
-    return builder.as_markup(resize_keyboard=True)
+    return builder.adjust(2, 2, 1).as_markup(resize_keyboard=True)
 
 
 

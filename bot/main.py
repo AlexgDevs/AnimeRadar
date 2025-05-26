@@ -3,6 +3,7 @@ import os
 from aiogram import F, Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import message, Message
+from aiogram.fsm.context import FSMContext
 
 from sqlalchemy import select
 
@@ -13,30 +14,35 @@ from .database import (
                     User,
                     Anime,
                     up,
-                    drop) 
+                    drop,
+                    engine) 
 
 from .keyboards.reply import main_menu
+from .handlers import config_handler
+from .utils import UserState
 
 load_dotenv(find_dotenv())
 
 dp = Dispatcher()
 
 @dp.message(CommandStart())
-async def give_main_menu(message: Message):
+async def give_main_menu(message: Message, state: FSMContext):
 
     user_id = message.from_user.id
 
     try:
 
-        with Session.begin() as session:
+        async with Session.begin() as session:
             user = session.scalar(select(User).filter(User.id == user_id))
             if not user:
-                session.add(User(id = user_id))
-                session.flush()
+                await session.add(User(id = user_id))
+                await session.flush()
                 await message.answer(f'Welcome! {message.from_user.first_name}.', reply_markup=main_menu())
+                await state.set_state(UserState.user_action)
 
             else:
                 await message.answer(f'Hello! {message.from_user.first_name}', reply_markup=main_menu())
+                await state.set_state(UserState.user_action)
 
     except Exception as e:
         print(e)
@@ -44,7 +50,9 @@ async def give_main_menu(message: Message):
 
 async def main():
     bot = Bot(os.getenv('TOKEN'))
-    drop()
-    up()
+    await drop(async_engine=engine)
+    await up(async_engine=engine)
 
+
+    dp.include_routers(config_handler)
     await dp.start_polling(bot)

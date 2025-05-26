@@ -1,18 +1,22 @@
 from sqlalchemy import create_engine, ForeignKey, String, MetaData
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine
 
-engine = create_engine(
-    url='sqlite:///mydatabase.db',
+engine = create_async_engine(
+    url='sqlite+aiosqlite:///mydatabase.db',
     echo=True
 )
 
-Session = sessionmaker(bind=engine)
+Session = async_sessionmaker(bind=engine)
 
-def up():
-    Base.metadata.create_all(engine)
+async def up(async_engine: AsyncEngine):
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-def drop():
-    Base.metadata.drop_all(engine)
+async def drop(async_engine: AsyncEngine):
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 class Base(DeclarativeBase):
     pass
