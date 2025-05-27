@@ -20,12 +20,15 @@ config_handler = Router()
 @config_handler.message(F.text == '📚 My Library', UserState.user_action)
 async def create_transitions(message: Message, state: FSMContext):
 
-    await message.answer('You selected library menu!', reply_markup=library_menu())
+    await message.answer('You select library menu!', reply_markup=library_menu())
+
+
 
 @config_handler.message(F.text == '🔙 Back', UserState.user_action)
 async def back_to_main_menu(message: Message, state: FSMContext):
 
-    await message.answer('You back to main menu!', reply_markup=main_menu())
+    await message.answer('Your back to main menu!', reply_markup=main_menu())
+
 
 
 @config_handler.message(F.text == '🔍 Search Anime', UserState.user_action)
@@ -33,6 +36,7 @@ async def get_query(message: Message, state: FSMContext):
 
     await message.answer('Введите название аниме')
     await state.set_state(QueryAnime.await_anime_query)
+
 
 
 @config_handler.message(F.text, QueryAnime.await_anime_query)
@@ -90,7 +94,7 @@ async def show_current_anime(message: Message, current_index: int, anime_list: d
         button_count += 1
         builder.button(text='next', callback_data=f'next_{current_index + 1}_{count}')
 
-    builder.button(text='Add in my library', callback_data=f'buy_{current_anime['mal_id']}')
+    builder.button(text='Add in my library', callback_data=f'add_to_lib_{current_anime['mal_id']}')
 
     if button_count == 2:
         choice = builder.adjust(2, 1).as_markup()
@@ -127,7 +131,7 @@ async def get_current_page(callback: CallbackQuery, state: FSMContext):
         button_count += 1
         builder.button(text='next', callback_data=f'next_{current_index + 1}_{count}')
 
-    builder.button(text='Add in my library', callback_data=f'buy_{current_anime['mal_id']}')
+    builder.button(text='Add in my library', callback_data=f'add_to_lib_{current_anime['mal_id']}')
 
     if button_count == 2:
         choice = builder.adjust(2, 1).as_markup()
@@ -149,9 +153,6 @@ async def next_current_page(callback: CallbackQuery, state: FSMContext):
 @config_handler.callback_query(F.data.startswith('prev_'))
 async def back_current_page(callback: CallbackQuery, state: FSMContext):
     await get_current_page(callback, state)
-
-
-
 
 
 

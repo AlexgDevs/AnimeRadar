@@ -18,7 +18,7 @@ from .database import (
                     engine) 
 
 from .keyboards.reply import main_menu
-from .handlers import config_handler
+from .handlers import config_handler, library_handler
 from .utils import UserState
 
 load_dotenv(find_dotenv())
@@ -33,9 +33,9 @@ async def give_main_menu(message: Message, state: FSMContext):
     try:
 
         async with Session.begin() as session:
-            user = session.scalar(select(User).filter(User.id == user_id))
+            user = await session.scalar(select(User).filter(User.id == user_id))
             if not user:
-                await session.add(User(id = user_id))
+                session.add(User(id = user_id))
                 await session.flush()
                 await message.answer(f'Welcome! {message.from_user.first_name}.', reply_markup=main_menu())
                 await state.set_state(UserState.user_action)
@@ -54,5 +54,9 @@ async def main():
     await up(async_engine=engine)
 
 
-    dp.include_routers(config_handler)
+    dp.include_routers(
+        config_handler,
+        library_handler
+                    )
+
     await dp.start_polling(bot)

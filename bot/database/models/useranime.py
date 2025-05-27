@@ -13,3 +13,5 @@ class UserAnime(Base):
 
     user: Mapped['User'] = relationship('User', back_populates='anime', foreign_keys=[user_id])
     anime: Mapped['Anime'] = relationship('Anime', back_populates='users', foreign_keys=[anime_id])
+
+    mal_id: Mapped[int]
