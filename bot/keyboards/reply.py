@@ -5,12 +5,20 @@ def main_menu() -> ReplyKeyboardMarkup:
     '''Main menu'''
 
     builder = ReplyKeyboardBuilder()
-    builder.button(text='🔍 Search Anime') #.
-    builder.button(text='📚 My Library') #.
+    builder.button(text='🔍 Search Anime') #. passed!
+    builder.button(text='📚 My Library') #. passed!
     builder.button(text='🏆 Top Anime') #.
     builder.button(text='🔔 Notifications')#. 
     
     return builder.adjust(2, 2, 2).as_markup(resize_keyboard=True)
+
+
+def stop_search_button() -> ReplyKeyboardMarkup:
+
+    builder = ReplyKeyboardBuilder()
+    builder.button(text='Stop')
+    
+    return builder.as_markup(resize_keyboard=True)
 
 def library_menu() -> ReplyKeyboardMarkup:
     '''Library menu'''

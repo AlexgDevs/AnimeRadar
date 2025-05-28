@@ -1,8 +1,11 @@
 from aiogram import F,  Router
 from aiogram.types import callback_query, CallbackQuery, Message, message
 from sqlalchemy import func, select
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from ..database import Session, Anime, User, UserAnime
+from ..utils import UserState
+from ..keyboards import button_work_with_library
 
 library_handler = Router()
 
@@ -32,16 +35,40 @@ async def add_to_library(callback: CallbackQuery):
             await callback.answer('Текущий пользователь или аниме не найдены')
 
 
-# @library_handler.message(F.text == '📚 My Library')
-# async def get_list_library(message: Message):
+@library_handler.message(F.text=='📅 Planned', UserState.user_action)
+async def get_anime_for_watching(message: Message):
 
-#     user_id = message.from_user.id 
-#     current_page = 1
+    user_id = message.from_user.id 
 
-#     async with Session() as session:
-#         count = await session.scalar(select(func.count(UserAnime.id)).filter(UserAnime.user_id==user_id))
-#         offset = (current_page - 1) * 1
+    async with Session() as session:
+        planned_anime = await session.scalars(select(UserAnime.mal_id).filter(UserAnime.user_id == user_id, UserAnime.status == 'planned'))
+        planned_anime_list = planned_anime.all()
 
-#         current_anime = await session.scalar(select(UserAnime.anime).order_by(UserAnime.id).offset(offset).limit(1))
+        if not planned_anime_list:
+            await message.answer('Anime not Found!')
+            return
+        
+        builder = InlineKeyboardBuilder()
+        for planned_anime in planned_anime_list:
+            anime = await session.scalar(select(Anime).filter(Anime.mal_id == planned_anime))
+            builder.button(text=f'{anime.title}', callback_data=f'planned_anime_mal_id:{anime.mal_id}')
+    await message.answer('your_anime' , reply_markup=builder.adjust(2).as_markup())
 
-#         await message.answer(current_anime.title)
+
+@library_handler.callback_query(F.data.startswith('planned_anime_mal_id:'))
+async def get_planned_bunner_anime(callback: CallbackQuery):
+
+    await callback.answer()
+    mal_id = callback.data.split(':')[1]
+    mal_id = int(mal_id)
+
+    user_id = callback.from_user.id 
+
+    async with Session() as session:
+        current_mal_id = await session.scalar(select(UserAnime.mal_id).filter(UserAnime.user_id == user_id, UserAnime.mal_id == mal_id))
+        if current_mal_id:
+            anime_bunner = await session.scalar(select(Anime).filter(Anime.mal_id == mal_id))
+            if anime_bunner:
+                await callback.message.answer_photo(photo=anime_bunner.photo_url,
+                                                    caption=f'Title: {anime_bunner.title}\n\nSynopsis:{anime_bunner.synopsis[:200]}\n\nLast episode: {anime_bunner.last_episode}',
+                                                    reply_markup=button_work_with_library(anime_mal_id=anime_bunner.mal_id))

@@ -11,7 +11,6 @@ class Anime(Base):
     title: Mapped[str]
     photo_url: Mapped[str]
     last_episode: Mapped[str]
-    status: Mapped[str] = mapped_column(default='no wathing')
     synopsis: Mapped[str]
 
     users: Mapped[list['UserAnime']] = relationship('UserAnime', back_populates='anime')

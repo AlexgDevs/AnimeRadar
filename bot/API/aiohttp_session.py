@@ -9,17 +9,12 @@ from aiogram import F
 fake = Faker()
 
 header = {'User-Agent': fake.user_agent()}
-JIKAN_URL = "https://api.jikan.moe/v4"
-import json
 
 import aiohttp
 import asyncio
 from typing import Optional, Dict, Any
 
 JIKAN_URL = "https://api.jikan.moe/v4"
-
-url = 'https://www.russianfood.com/recipes/bytype/?fid=41'
-
 
 
 async def search_anime_title(title: str) -> dict:
@@ -72,8 +67,8 @@ async def search_anime_title(title: str) -> dict:
                                 'synopsis': required_fields['synopsis']
                             })
                             
-                    except (KeyError, TypeError) as e:
-                        print(f"Error processing anime data: {str(e)}")
+                    except KeyError or TypeError as e:
+                        print(f"Error processing anime data: {e}")
                         continue
                 
                 return valid_anime_list

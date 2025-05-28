@@ -50,7 +50,7 @@ async def give_main_menu(message: Message, state: FSMContext):
 
 async def main():
     bot = Bot(os.getenv('TOKEN'))
-    await drop(async_engine=engine)
+    # await drop(async_engine=engine)
     await up(async_engine=engine)
 
 

@@ -13,6 +13,7 @@ from ..utils import UserState, QueryAnime
 from ..keyboards import (
     main_menu,
     library_menu,
+    stop_search_button
 )
 
 config_handler = Router()
@@ -30,11 +31,19 @@ async def back_to_main_menu(message: Message, state: FSMContext):
     await message.answer('Your back to main menu!', reply_markup=main_menu())
 
 
+@ config_handler.message(F.text=='Stop', QueryAnime.await_anime_query)
+async def stop_search_query(message:Message, state: FSMContext):
+
+    await message.answer('Your stopped search anime!', reply_markup=main_menu())
+
+    await state.clear()
+    await state.set_state(UserState.user_action)
+
 
 @config_handler.message(F.text == '🔍 Search Anime', UserState.user_action)
 async def get_query(message: Message, state: FSMContext):
 
-    await message.answer('Введите название аниме')
+    await message.answer('Введите название аниме', reply_markup=stop_search_button())
     await state.set_state(QueryAnime.await_anime_query)
 
 
@@ -47,31 +56,28 @@ async def get_current_anime(message: Message, state: FSMContext):
     anime_list = await search_anime_title(query)
 
     async with Session.begin() as session:
-        
-        exiting = await session.scalars(select(Anime))
-        result = exiting.all()
-
         filtered_anime_list = [
-            anime for anime in anime_list
-            if anime['mal_id'] is not None
-            and anime['title'] is not None
-            and anime['episodes'] is not None
-            and anime['image_url'] is not None
-            and anime['synopsis'] is not None
-        ]
-        # какой колхоз ахахаха, ну пока так, хуйня генератор кнч ну да пофек, главное что корутина возврощает не None
+        anime for anime in anime_list
+        if anime['mal_id'] is not None
+        and anime['title'] is not None
+        and anime['episodes'] is not None
+        and anime['image_url'] is not None
+        and anime['synopsis'] is not None
+    ]
 
-        if not result:
-            for anime in filtered_anime_list:
+        existing_ids = await session.scalars(select(Anime.mal_id))
+        existing_ids = set(existing_ids.all())
 
-                    session.add(Anime(
-                        mal_id=anime['mal_id'],
-                        title=anime['title'],
-                        last_episode=anime['episodes'],
-                        photo_url=anime['image_url'],
-                        synopsis=anime['synopsis']
-                    ))
-                    await session.flush()
+        for anime in filtered_anime_list:
+            if anime['mal_id'] not in existing_ids:
+                session.add(Anime(
+                    mal_id=anime['mal_id'],
+                    title=anime['title'],
+                    last_episode=anime['episodes'],
+                    photo_url=anime['image_url'],
+                    synopsis=anime['synopsis']
+                ))
+                await session.flush()
 
     await state.update_data(anime_list=anime_list)
     await show_current_anime(message=message, current_index=current_index, anime_list=anime_list)
