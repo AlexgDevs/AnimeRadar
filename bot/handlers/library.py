@@ -91,3 +91,21 @@ async def change_status_looked(callback: CallbackQuery):
             await callback.message.answer('Вы успешно изменили статус!')
         else:
             await callback.message.reply('Данное аниме не найдено')
+
+
+# remove
+@library_handler.callback_query(F.data.startswith('remove_anime_'))
+async def remove_anime(callback: CallbackQuery):
+
+    await callback.answer()
+    mal_id = callback.data.split('_')[2]
+    user_id = callback.from_user.id
+
+    async with Session.begin() as session:
+        user_anime = await session.scalar(select(UserAnime).filter(UserAnime.user_id == user_id, UserAnime.mal_id == mal_id))
+        if user_anime:
+            await callback.message.delete()
+            await session.delete(user_anime)
+            await callback.message.answer('Аниме успешно удалено!')
+        else:
+            await callback.message.reply('Данное аниме не найдено')
