@@ -18,7 +18,7 @@ from .database import (
                     engine) 
 
 from .keyboards.reply import main_menu
-from .handlers import config_handler, library_handler
+from .handlers import config_handler, library_inline_handler, library_reply_handler
 from .utils import UserState
 
 load_dotenv(find_dotenv())
@@ -56,7 +56,8 @@ async def main():
 
     dp.include_routers(
         config_handler,
-        library_handler
+        library_reply_handler,
+        library_inline_handler
                     )
 
     await dp.start_polling(bot)

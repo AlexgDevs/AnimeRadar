@@ -7,55 +7,12 @@ from ..database import Session, Anime, User, UserAnime
 from ..utils import UserState
 from ..keyboards import button_work_with_library
 
-library_handler = Router()
-
-@library_handler.callback_query(F.data.startswith('add_to_lib_'))
-async def add_to_library(callback: CallbackQuery):
-
-    await callback.answer()
-    mal_id = callback.data.split('_')[3]
-    user_id = callback.from_user.id 
-
-    async with Session.begin() as session:
-        current_anime = await session.scalar(select(Anime).filter(Anime.mal_id==mal_id))
-        user = await session.scalar(select(User).filter(User.id==user_id))
-
-        user_library = await session.scalar(select(UserAnime).filter(UserAnime.user_id==user_id, UserAnime.anime_id==current_anime.id))
-
-        if current_anime and user:
-            if not user_library:
-                session.add(UserAnime(user=user, anime=current_anime, mal_id=current_anime.mal_id))
-                await session.flush()
-                await callback.message.answer('Аниме успешно добавлено в вашу библиотеку!')
-                
-            
-            else:
-                await callback.message.reply('Текущее аниме находится в вашей библиотеке')
-        else:
-            await callback.answer('Текущий пользователь или аниме не найдены')
+library_inline_handler = Router()
 
 
-@library_handler.message(F.text=='📅 Planned', UserState.user_action)
-async def get_anime_for_watching(message: Message):
 
-    user_id = message.from_user.id 
-
-    async with Session() as session:
-        planned_anime = await session.scalars(select(UserAnime.mal_id).filter(UserAnime.user_id == user_id, UserAnime.status == 'planned'))
-        planned_anime_list = planned_anime.all()
-
-        if not planned_anime_list:
-            await message.answer('Anime not Found!')
-            return
-        
-        builder = InlineKeyboardBuilder()
-        for planned_anime in planned_anime_list:
-            anime = await session.scalar(select(Anime).filter(Anime.mal_id == planned_anime))
-            builder.button(text=f'{anime.title}', callback_data=f'planned_anime_mal_id:{anime.mal_id}')
-    await message.answer('your_anime' , reply_markup=builder.adjust(2).as_markup())
-
-
-@library_handler.callback_query(F.data.startswith('planned_anime_mal_id:'))
+# anime_inline_buttons
+@library_inline_handler.callback_query(F.data.startswith('planned_anime_mal_id:'))
 async def get_planned_bunner_anime(callback: CallbackQuery):
 
     await callback.answer()
@@ -76,7 +33,7 @@ async def get_planned_bunner_anime(callback: CallbackQuery):
 
 
 #looked 
-@library_handler.callback_query(F.data.startswith('add_to_looked_anime_'))
+@library_inline_handler.callback_query(F.data.startswith('add_to_looked_anime_'))
 async def change_status_looked(callback: CallbackQuery):
 
     await callback.answer()
@@ -93,8 +50,9 @@ async def change_status_looked(callback: CallbackQuery):
             await callback.message.reply('Данное аниме не найдено')
 
 
+
 # remove
-@library_handler.callback_query(F.data.startswith('remove_anime_'))
+@library_inline_handler.callback_query(F.data.startswith('remove_anime_'))
 async def remove_anime(callback: CallbackQuery):
 
     await callback.answer()

@@ -7,13 +7,14 @@ from aiogram.fsm.context import FSMContext
 
 from sqlalchemy import func, select
 from ..API.aiohttp_session import search_anime_title
-from ..database import Anime, Session
+from ..database import Anime, Session, User, UserAnime
 
 from ..utils import UserState, QueryAnime
 from ..keyboards import (
     main_menu,
     library_menu,
-    stop_search_button
+    stop_search_button,
+    anime_inline_buttons
 )
 
 config_handler = Router()
@@ -94,13 +95,13 @@ async def show_current_anime(message: Message, current_index: int, anime_list: d
     builder = InlineKeyboardBuilder()
     if current_index > 0:
         button_count += 1
-        builder.button(text='back', callback_data=f'prev_{current_index - 1}_{count}')
+        builder.button(text='Предыдущий', callback_data=f'prev_{current_index - 1}_{count}')
     
     if current_index < count - 1:
         button_count += 1
-        builder.button(text='next', callback_data=f'next_{current_index + 1}_{count}')
+        builder.button(text='Дальше', callback_data=f'next_{current_index + 1}_{count}')
 
-    builder.button(text='Add in my library', callback_data=f'add_to_lib_{current_anime['mal_id']}')
+    builder.button(text='Посмотреть', callback_data=f'check_bunner_{current_anime['mal_id']}_{current_index}_{count}')
 
     if button_count == 2:
         choice = builder.adjust(2, 1).as_markup()
@@ -131,13 +132,13 @@ async def get_current_page(callback: CallbackQuery, state: FSMContext):
     builder = InlineKeyboardBuilder()
     if current_index > 0:
         button_count += 1
-        builder.button(text='back', callback_data=f'prev_{current_index - 1}_{count}')
+        builder.button(text='Предыдущий', callback_data=f'prev_{current_index - 1}_{count}')
     
     if current_index < count - 1:
         button_count += 1
-        builder.button(text='next', callback_data=f'next_{current_index + 1}_{count}')
+        builder.button(text='Дальше', callback_data=f'next_{current_index + 1}_{count}')
 
-    builder.button(text='Add in my library', callback_data=f'add_to_lib_{current_anime['mal_id']}')
+    builder.button(text='Посмотреть', callback_data=f'check_bunner_{current_anime['mal_id']}_{current_index}_{count}')
 
     if button_count == 2:
         choice = builder.adjust(2, 1).as_markup()
@@ -162,12 +163,86 @@ async def back_current_page(callback: CallbackQuery, state: FSMContext):
 
 
 
+#check bunner
+@config_handler.callback_query(F.data.startswith('check_bunner_'))
+async def check_bunner(callback: CallbackQuery):
+
+    await callback.answer()
+    mal_id, current_index, count = callback.data.split('_')[2:]
+
+
+    async with Session() as session:
+        current_anime = await session.scalar(select(Anime).filter(Anime.mal_id == mal_id))
+
+        if current_anime:
+            caption = f'Titel: {current_anime.title}\n\n{current_anime.synopsis[:200]}'
+            await callback.message.edit_media(media=InputMediaPhoto(media=current_anime.photo_url, caption=caption), reply_markup=anime_inline_buttons(mal_id, current_index, count))
 
 
 
+# add anime
+@config_handler.callback_query(F.data.startswith('add_to_library_'))
+async def add_to_library(callback: CallbackQuery):
+
+    await callback.answer()
+    mal_id = callback.data.split('_')[3]
+    user_id = callback.from_user.id 
+
+    async with Session.begin() as session:
+        current_anime = await session.scalar(select(Anime).filter(Anime.mal_id==mal_id))
+        user = await session.scalar(select(User).filter(User.id==user_id))
+
+        user_library = await session.scalar(select(UserAnime).filter(UserAnime.user_id==user_id, UserAnime.anime_id==current_anime.id))
+
+        if current_anime and user:
+            if not user_library:
+                session.add(UserAnime(user=user, anime=current_anime, mal_id=current_anime.mal_id))
+                await session.flush()
+                await callback.message.answer('Аниме успешно добавлено в вашу библиотеку!')
+                
+            
+            else:
+                await callback.message.reply('Текущее аниме находится в вашей библиотеке')
+        else:
+            await callback.answer('Текущий пользователь или аниме не найдены')
 
 
 
+#back to current anime
+@config_handler.callback_query(F.data.startswith('back_anime_'))
+async def back_to_current_anime(callback: CallbackQuery, state: FSMContext):
+
+    data = await state.get_data()
+    anime_list = data.get('anime_list')
+    
+    mal_id, current_index, count = callback.data.split('_')[2:]
+
+    current_index = int(current_index)
+    count = int(count)
+
+    current_anime = anime_list[current_index]
+
+    button_count = 0
+
+    builder = InlineKeyboardBuilder()
+    if current_index > 0:
+        button_count += 1
+        builder.button(text='Предыдущий', callback_data=f'prev_{current_index - 1}_{count}')
+    
+    if current_index < count - 1:
+        button_count += 1
+        builder.button(text='Дальше', callback_data=f'next_{current_index + 1}_{count}')
+
+    builder.button(text='Посмотреть', callback_data=f'check_bunner_{current_anime['mal_id']}')
+
+    if button_count == 2:
+        choice = builder.adjust(2, 1).as_markup()
+
+    else:
+        choice = builder.adjust(1).as_markup()
+
+    caption = f'Titel: {current_anime['title']}\n\n{current_anime['synopsis'][:200]}\n\nPage {current_index + 1} | {count}'
+    await callback.message.edit_media(media=InputMediaPhoto(media=current_anime['image_url'], caption=caption), reply_markup=choice)
 
 
 
