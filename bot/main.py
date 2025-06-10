@@ -18,7 +18,7 @@ from .database import (
                     engine) 
 
 from .keyboards.reply import main_menu
-from .handlers import config_handler
+from .handlers import config_handler, anime_interaction_handler
 from .utils import UserState
 
 load_dotenv(find_dotenv())
@@ -37,11 +37,11 @@ async def give_main_menu(message: Message, state: FSMContext):
             if not user:
                 session.add(User(id = user_id))
                 await session.flush()
-                await message.answer(f'Welcome! {message.from_user.first_name}.', reply_markup=main_menu())
+                await message.answer(f'Добро пожаловать! {message.from_user.first_name}.', reply_markup=main_menu())
                 await state.set_state(UserState.user_action)
 
             else:
-                await message.answer(f'Hello! {message.from_user.first_name}', reply_markup=main_menu())
+                await message.answer(f'Привет! {message.from_user.first_name}', reply_markup=main_menu())
                 await state.set_state(UserState.user_action)
 
     except Exception as e:
@@ -56,6 +56,7 @@ async def main():
 
     dp.include_routers(
         config_handler,
+        anime_interaction_handler
                     )
 
     await dp.start_polling(bot)

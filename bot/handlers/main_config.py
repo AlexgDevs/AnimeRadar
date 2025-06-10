@@ -15,8 +15,8 @@ from ..keyboards import (
 
     main_menu,
     library_menu,
-    stop_search_button
-
+    stop_search_button,
+    anime_interaction_buttons
 )
 
 
@@ -60,7 +60,6 @@ async def get_json_current_anime_with_title(message: Message, state: FSMContext)
     if anime_list is not None:
         
         await state.update_data(anime_list=anime_list)
-
         async with Session.begin() as session:
             
             anime_mal_ids = set(await session.scalars(select(Anime.mal_id)))
@@ -71,7 +70,6 @@ async def get_json_current_anime_with_title(message: Message, state: FSMContext)
                     anime_for_adding.append(Anime(**anime_dict))
             
             if anime_for_adding:
-                print(anime_for_adding)
                 session.add_all(anime_for_adding)
                 await session.flush()
     
@@ -80,6 +78,23 @@ async def get_json_current_anime_with_title(message: Message, state: FSMContext)
     else:
         await message.answer('Такого аниме нет, попробуй еще раз')
 
+
+@config_handler.callback_query(F.data.startswith('mal_id_current_anime:'))
+async def get_buttons_iteractions_for_anime(callback: CallbackQuery):
+
+    await callback.answer()
+    mal_id, count, current_index = callback.data.split(':')[1:]
+    count = int(count)
+    current_index = int(current_index)
+
+    async with Session() as session:
+        current_anime = await session.scalar(select(Anime).filter(Anime.mal_id == mal_id))
+        if current_anime:
+            await callback.message.edit_media(
+                media=InputMediaPhoto(
+                media=current_anime.image,
+                caption=f'Episodes: {current_anime.episodes}'),
+                reply_markup=anime_interaction_buttons(mal_id=current_anime.mal_id, count=count, current_index=current_index))
 
 
 @config_handler.callback_query(F.data.startswith('next_'))
