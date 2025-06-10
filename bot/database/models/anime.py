@@ -9,8 +9,8 @@ class Anime(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     mal_id: Mapped[int]
     title: Mapped[str]
-    photo_url: Mapped[str]
-    last_episode: Mapped[str]
+    image: Mapped[str]
+    episodes: Mapped[str]
     synopsis: Mapped[str]
 
     users: Mapped[list['UserAnime']] = relationship('UserAnime', back_populates='anime')

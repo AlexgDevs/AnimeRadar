@@ -18,7 +18,7 @@ from .database import (
                     engine) 
 
 from .keyboards.reply import main_menu
-from .handlers import config_handler, library_inline_handler, library_reply_handler
+from .handlers import config_handler
 from .utils import UserState
 
 load_dotenv(find_dotenv())
@@ -50,14 +50,12 @@ async def give_main_menu(message: Message, state: FSMContext):
 
 async def main():
     bot = Bot(os.getenv('TOKEN'))
-    # await drop(async_engine=engine)
+    await drop(async_engine=engine)
     await up(async_engine=engine)
 
 
     dp.include_routers(
         config_handler,
-        library_reply_handler,
-        library_inline_handler
                     )
 
     await dp.start_polling(bot)
