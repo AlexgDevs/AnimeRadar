@@ -1,15 +1,10 @@
-import asyncio
-from typing import Union
-from aiogram.types import message, Message, CallbackQuery, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram import F, Router
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
-from pprint import pprint
+from sqlalchemy import select
 
-from sqlalchemy import func, select
 from ..API.parse_anime import search_anime
-from ..database import Anime, Session, User, UserAnime
-
+from ..database import Anime, Session
 from ..utils import UserState, QueryAnime, shift_index, main_pagination
 from ..keyboards import (
 
@@ -17,6 +12,7 @@ from ..keyboards import (
     library_menu,
     stop_search_button,
     anime_interaction_buttons
+
 )
 
 
@@ -42,7 +38,7 @@ async def stopped_search_anime(message: Message, state: FSMContext):
     await state.set_state(UserState.user_action)
 
 
-#POESK
+
 @config_handler.message(F.text == '🔍 Поиск аниме', UserState.user_action)
 async def request_title(message: Message, state: FSMContext):
 
@@ -79,6 +75,7 @@ async def get_json_current_anime_with_title(message: Message, state: FSMContext)
         await message.answer('Такого аниме нет, попробуй еще раз')
 
 
+
 @config_handler.callback_query(F.data.startswith('mal_id_current_anime:'))
 async def get_buttons_iteractions_for_anime(callback: CallbackQuery):
 
@@ -97,6 +94,7 @@ async def get_buttons_iteractions_for_anime(callback: CallbackQuery):
                 reply_markup=anime_interaction_buttons(mal_id=current_anime.mal_id, count=count, current_index=current_index))
 
 
+
 @config_handler.callback_query(F.data.startswith('next_'))
 async def next_page(callback: CallbackQuery, state: FSMContext):
     await shift_index(callback, state)
@@ -106,8 +104,3 @@ async def next_page(callback: CallbackQuery, state: FSMContext):
 @config_handler.callback_query(F.data.startswith('prev_'))
 async def prev_page(callback: CallbackQuery, state: FSMContext):
     await shift_index(callback, state)
-
-
-
-
-

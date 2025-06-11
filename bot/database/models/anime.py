@@ -12,5 +12,6 @@ class Anime(Base):
     image: Mapped[str]
     episodes: Mapped[str]
     synopsis: Mapped[str]
+    trailer: Mapped[str]
 
     users: Mapped[list['UserAnime']] = relationship('UserAnime', back_populates='anime')

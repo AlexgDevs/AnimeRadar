@@ -9,4 +9,4 @@ if __name__=='__main__':
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print(cl.Fore.RED,'Stopped!',cl.Fore.RESET)
+        print(cl.Fore.RED,'stopped',cl.Fore.RESET)

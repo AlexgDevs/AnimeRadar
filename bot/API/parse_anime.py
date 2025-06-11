@@ -21,8 +21,8 @@ async def search_anime(title: str) -> list[dict] | None:
             
             if response.status == 200:
                 all_json = await response.json()
-                # with open('anime_data.json', 'w', encoding='utf-8') as file:
-                #     json.dump(all_json, file, indent=4, ensure_ascii=True)
+                with open('anime_data.json', 'w', encoding='utf-8') as file:
+                    json.dump(all_json, file, indent=4, ensure_ascii=True)
                 
                 verified_list = []
 
@@ -34,7 +34,8 @@ async def search_anime(title: str) -> list[dict] | None:
                     'title': None,
                     'episodes': None,
                     'synopsis': None,
-                    'image': None       
+                    'image': None,
+                    'trailer': None
                     }
 
 
@@ -43,6 +44,9 @@ async def search_anime(title: str) -> list[dict] | None:
                     required_fields['episodes'] = items.get('episodes', {})
                     required_fields['synopsis'] = items.get('synopsis', {})
                     required_fields['image'] = items.get('images', {}).get('jpg', {}).get('large_image_url', {})
+                    field_trailer = items.get('trailer') if items.get('trailer') is not None else 'Нету'
+                    if field_trailer != 'Нету':
+                        required_fields['trailer'] = field_trailer.get('url') if  field_trailer.get('url') is not None else 'Нету'
 
                     if all(required_fields.values()):
                         verified_list.append(required_fields)
