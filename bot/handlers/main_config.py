@@ -94,13 +94,7 @@ async def get_buttons_iteractions_for_anime(callback: CallbackQuery):
                 reply_markup=anime_interaction_buttons(mal_id=current_anime.mal_id, count=count, current_index=current_index))
 
 
-
-@config_handler.callback_query(F.data.startswith('next_'))
-async def next_page(callback: CallbackQuery, state: FSMContext):
-    await shift_index(callback, state)
-
-
-
-@config_handler.callback_query(F.data.startswith('prev_'))
-async def prev_page(callback: CallbackQuery, state: FSMContext):
+@config_handler.callback_query(F.data.startswith(('next_', 'prev_')))
+async def handle_pagination(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
     await shift_index(callback, state)

@@ -74,7 +74,6 @@ async def get_full_synopsis(callback: CallbackQuery):
 
     await callback.answer()
     mal_id = callback.data.split(':')[1]
-    user_id = callback.from_user.id
 
     async with Session() as session:
         anime = await session.scalar(select(Anime).filter(Anime.mal_id == mal_id))
@@ -83,3 +82,19 @@ async def get_full_synopsis(callback: CallbackQuery):
                 anime.synopsis,
                 parse_mode='HTML'
             )
+
+
+
+@anime_interaction_handler.callback_query(F.data.startswith('add_watching:'))
+async def add_anime_to_wathcing(callback: CallbackQuery):
+
+    await callback.answer()
+    user_id = callback.from_user.id
+    mal_id = callback.data.split(':')[1]
+
+    async with Session.begin() as session:
+        user_anime_status = await session.scalar(select(UserAnime).filter(UserAnime.user_id == user_id, UserAnime.mal_id == mal_id))
+        if user_anime_status:
+            user_anime_status.status = 'viewed'
+            await callback.message.delete()
+            await callback.message.answer('Вы успешно добавили в просмотренное')
