@@ -25,4 +25,3 @@ def anime_buttons_changed_btn_add_to_waching_or_not(mal_id: int, filter: str) ->
     return builder.adjust(2, 1, 1).as_markup()
 
 
-

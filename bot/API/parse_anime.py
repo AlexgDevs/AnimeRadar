@@ -6,7 +6,7 @@ faq = Faker()
 
 JIKAN_URL = "https://api.jikan.moe/v4"
 
-async def search_anime(title: str) -> list[dict] | None:
+async def search_anime(title: str, debug: bool) -> list[dict] | None:
     async with ClientSession() as session:
 
         param = {
@@ -21,8 +21,9 @@ async def search_anime(title: str) -> list[dict] | None:
             
             if response.status == 200:
                 all_json = await response.json()
-                with open('anime_data.json', 'w', encoding='utf-8') as file:
-                    json.dump(all_json, file, indent=4, ensure_ascii=True)
+                if debug:
+                    with open('anime_data.json', 'w', encoding='utf-8') as file:
+                        json.dump(all_json, file, indent=4, ensure_ascii=True)
                 
                 verified_list = []
 

@@ -9,6 +9,7 @@ def main_menu() -> ReplyKeyboardMarkup:
     builder.button(text='📚 Моя библиотека')
     builder.button(text='🏆 Топ 10 аниме по рейтингам')
     builder.button(text='🔔 Уведомления')
+    builder.button(text='Последнее добавленные аниме')
     
     return builder.adjust(2, 2, 2).as_markup(resize_keyboard=True)
 

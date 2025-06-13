@@ -1,11 +1,11 @@
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from ..API.parse_anime import search_anime
 from ..database import Anime, Session
-from ..utils import UserState, QueryAnime, shift_index, main_pagination
+from ..utils import UserState, QueryAnime, shift_index, index_pagination, deafult_pagination, deafult_shift
 from ..keyboards import (
 
     main_menu,
@@ -52,7 +52,7 @@ async def get_json_current_anime_with_title(message: Message, state: FSMContext)
 
     title = message.text
 
-    anime_list = await search_anime(title)
+    anime_list = await search_anime(title, False)
     if anime_list is not None:
         
         await state.update_data(anime_list=anime_list)
@@ -69,7 +69,7 @@ async def get_json_current_anime_with_title(message: Message, state: FSMContext)
                 session.add_all(anime_for_adding)
                 await session.flush()
     
-        await main_pagination(message=message, current_index=0, anime_list=anime_list)
+        await index_pagination(message=message, current_index=0, anime_list=anime_list)
 
     else:
         await message.answer('Такого аниме нет, попробуй еще раз')
@@ -98,3 +98,16 @@ async def get_buttons_iteractions_for_anime(callback: CallbackQuery):
 async def handle_pagination(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await shift_index(callback, state)
+
+
+
+@config_handler.message(F.text == 'Последнее добавленные аниме', UserState.user_action)
+async def get_last_anime_list(message: Message):
+
+    await deafult_pagination(message=message, current_page=1)
+
+
+@config_handler.callback_query(F.data.startswith(('deafult_prev_', 'deafult_next_')))
+async def get_deafult_shift(callback: CallbackQuery):
+
+    await deafult_shift(callback=callback)
